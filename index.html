@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cartones de Lotería · Digital</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00714A">
+<meta name="description" content="Cartones de lotería digitales (1-90) con Ambo, Terno y Lotería. By MonRoyLab.">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lotería 90">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;900&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+ --primary:#00714A;--primary-dark:#003D29;--primary-light:#04935F;
+ --gold:#D8A419;--gold-dark:#9C7710;
+ --free:#1690C9;--free-dark:#0B6693;
+ --bg:#EEF2EF;--panel:#FFFFFF;--ink:#0F241B;--muted:#5C6B63;
+ --danger:#C0392B;--warning:#B8730D;--blue:#1976D2;--line:#DCE3DD;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:10px;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+.app{max-width:1100px;margin:auto}
+
+/* ---- header ---- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.brand-row{display:flex;align-items:center;gap:10px}
+.ball-emoji{font-size:2rem;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.titles h1{font-family:'Fredoka',sans-serif;font-weight:900;font-size:clamp(1.25rem,4.4vw,2rem);margin:0;color:var(--primary-dark);letter-spacing:.2px}
+.titles .brand{display:block;font-weight:800;font-size:.68rem;color:var(--gold-dark);letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
+.cardchip{background:var(--primary);color:#fff;font-weight:800;font-size:.85rem;padding:8px 12px;border-radius:20px;box-shadow:0 3px 8px rgba(0,0,0,.18);white-space:nowrap}
+.cardchip b{font-family:'Fredoka',sans-serif;font-size:1.05rem;margin-right:3px}
+
+/* ---- controls ---- */
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.btn{border:0;border-radius:10px;padding:12px 6px;color:#fff;background:var(--primary);font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 3px 0 var(--primary-dark);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--primary-dark)}
+.btn.warning{background:var(--warning);box-shadow:0 3px 0 #7a4d09}
+.btn.secondary{background:#3F4F5C;box-shadow:0 3px 0 #24303a}
+.btn.danger{background:var(--danger);box-shadow:0 3px 0 #7d251c}
+.btn.gold{background:var(--gold);color:#2b2005;box-shadow:0 3px 0 var(--gold-dark)}
+
+/* ---- generic panel ---- */
+.section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;box-shadow:0 2px 10px rgba(15,36,27,.05)}
+.section h2{text-align:center;margin:0 0 8px;font-family:'Fredoka',sans-serif;font-size:1.15rem;color:var(--primary-dark)}
+.rules{font-weight:600;color:var(--muted);margin-bottom:8px;line-height:1.4;font-size:.8rem;text-align:center}
+
+/* ---- last-ball widget ---- */
+.callwidget{display:flex;align-items:center;justify-content:center;gap:14px;background:linear-gradient(180deg,#f4f8f5,#e7efe8);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.lastball{--ballColor:var(--muted);width:70px;height:70px;min-width:70px;border-radius:50%;background:radial-gradient(circle at 26% 22%,rgba(255,255,255,.5) 0%,var(--ballColor) 40%,var(--ballColor) 100%);border:3px solid var(--gold);box-shadow:0 4px 10px rgba(0,0,0,.25),inset 0 -3px 5px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Fredoka',sans-serif;line-height:1;transition:transform .25s}
+.lastball.pop{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.lastball .lb-num{font-size:1.85rem;font-weight:900;text-shadow:0 2px 3px rgba(0,0,0,.65),0 0 5px rgba(0,0,0,.55)}
+.ballmeta{text-align:center}
+.ballmeta .label{font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.history{display:flex;gap:6px;margin-top:5px;justify-content:center;flex-wrap:wrap}
+.chip{--ballColor:var(--muted);width:26px;height:26px;border-radius:50%;background:var(--ballColor);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;box-shadow:0 2px 4px rgba(0,0,0,.25);opacity:.92}
+.history .empty-hist{font-size:.72rem;color:var(--muted);font-weight:700}
+
+/* ---- calling board (1-90) ---- */
+.bingo-board{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;background:#1b1b1b;padding:6px;border-radius:12px}
+.ball{--ballColor:#666;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid #999;border-radius:6px;min-height:30px;font-size:clamp(.7rem,2.4vw,.95rem);font-weight:800;cursor:pointer;transition:transform .12s}
+.ball:active{transform:scale(.9)}
+.ball.called{color:#fff;border-color:rgba(0,0,0,.25);background:var(--ballColor)}
+.ball.last{outline:3px solid var(--gold);outline-offset:1px}
+
+/* ---- lotería card sections (9 columns x 3 rows) ---- */
+.lsection{margin-bottom:10px}
+.lsection:last-child{margin-bottom:0}
+.serieLabel{text-align:center;font-size:.68rem;font-weight:800;color:var(--muted);margin-top:4px;letter-spacing:.6px;text-transform:uppercase}
+.lgrid{display:grid;grid-template-columns:repeat(9,1fr);gap:3px}
+.lcell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;background:#fafafa;border:2px solid #98a29c;border-radius:6px;font-weight:800;font-size:clamp(.6rem,2.3vw,.92rem)}
+.lcell.free{background:var(--free);border-color:var(--free-dark)}
+.lcell.marked{background:var(--primary);border-color:var(--primary-dark);color:#fff}
+
+/* ---- manual editor ---- */
+.serieInput{display:flex;align-items:center;gap:8px;margin-bottom:10px;justify-content:center;flex-wrap:wrap}
+.serieInput label{font-weight:800;font-size:.85rem;color:var(--primary-dark)}
+.serieInput input{padding:8px 10px;border:2px solid #98a29c;border-radius:8px;font-weight:800;font-size:1rem;width:130px;text-align:center}
+.sectionTabs{display:flex;gap:6px;margin-bottom:8px}
+.sectionTabs button{flex:1;padding:8px 4px;border-radius:8px;border:2px solid var(--primary);background:#fff;color:var(--primary-dark);font-weight:800;cursor:pointer;font-size:.8rem}
+.sectionTabs button.active{background:var(--primary);color:#fff}
+.lcell.editor{background:#fff;cursor:pointer}
+.lcell.editor.free{background:var(--free)}
+.lcell.editor input{width:100%;height:100%;border:none;background:transparent;text-align:center;font-weight:800;font-size:inherit;padding:0;color:var(--ink)}
+.freetoggle{position:absolute;top:0;right:0;width:15px;height:15px;line-height:15px;border-radius:0 5px 0 6px;background:rgba(0,0,0,.4);color:#fff;border:none;font-size:.6rem;cursor:pointer;padding:0}
+
+.hidden{display:none!important}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.saved{background:#fff;border:2px solid var(--primary);border-radius:12px;padding:9px}
+.title{display:flex;justify-content:space-between;align-items:center;font-weight:900;margin-bottom:7px;color:var(--primary-dark);font-size:.85rem;gap:6px}
+.title button{padding:5px 8px;font-size:.7rem;border-radius:7px}
+.empty{text-align:center;padding:22px 10px;font-weight:700;color:var(--muted)}
+
+/* ---- premios log ---- */
+.premios{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
+.premio-item{display:flex;gap:8px;align-items:center;background:#f4f8f5;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:.78rem}
+.premio-badge{font-weight:900;font-family:'Fredoka',sans-serif;border-radius:6px;padding:3px 8px;color:#fff;font-size:.7rem;white-space:nowrap}
+.premio-badge.amb{background:var(--blue)}
+.premio-badge.ter{background:var(--warning)}
+.premio-badge.lot{background:var(--danger)}
+
+/* ---- overlays / modals ---- */
+.overlay{position:fixed;inset:0;background:rgba(6,15,10,.88);display:flex;align-items:center;justify-content:center;padding:12px;z-index:99}
+.modal{width:min(650px,100%);max-height:95vh;overflow:auto;background:#fff;border:5px solid var(--primary);border-radius:18px;padding:18px;text-align:center}
+.modal.small{border-color:var(--warning)}
+.bingo{font-family:'Fredoka',sans-serif;font-size:clamp(2.6rem,11vw,4.5rem);font-weight:900;color:var(--danger);line-height:.95}
+.party{font-size:2rem}
+.modal h3{font-family:'Fredoka',sans-serif;color:var(--primary-dark);margin-top:0;font-size:1.05rem}
+.clearOptions{display:grid;gap:9px;margin:14px 0}
+
+/* ---- premio banner (visible notification) ---- */
+.premioBanner{position:fixed;top:-140px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border:3px solid var(--primary);border-radius:16px;padding:14px 22px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:top .35s cubic-bezier(.34,1.56,.64,1);max-width:90vw}
+.premioBanner.show{top:14px}
+.premioBanner.amb{border-color:var(--blue)}
+.premioBanner.ter{border-color:var(--warning)}
+.premioBanner.lot{border-color:var(--danger)}
+.pb-badge{font-family:'Fredoka',sans-serif;font-weight:900;font-size:1.4rem;border-radius:8px;padding:4px 14px;color:#fff;display:inline-block;margin-bottom:4px;white-space:nowrap}
+.premioBanner.amb .pb-badge{background:var(--blue)}
+.premioBanner.ter .pb-badge{background:var(--warning)}
+.premioBanner.lot .pb-badge{background:var(--danger)}
+.pb-desc{font-weight:700;font-size:.82rem;color:var(--ink)}
+
+/* ---- toast ---- */
+.toast{position:fixed;left:50%;bottom:16px;transform:translate(-50%,16px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:30px;font-weight:700;font-size:.85rem;box-shadow:0 6px 18px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:200;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:650px){
+ .controls{grid-template-columns:1fr 1fr 1fr}
+ .lastball{width:60px;height:60px;min-width:60px}
+ .lastball .lb-num{font-size:1.5rem}
+ .titles h1{font-size:1.15rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+ <div class="brand-row">
+  <span class="ball-emoji">🎟️</span>
+  <div class="titles"><h1>Cartones de Lotería</h1><span class="brand">By MonRoyLab</span></div>
+ </div>
+ <div class="cardchip"><b id="count">0</b>cartones</div>
+</div>
+
+<div id="installRow" class="hidden" style="margin-bottom:10px">
+ <button class="btn gold" id="installBtn" style="width:100%">📲 Instalar esta app en tu dispositivo</button>
+</div>
+<div id="iosHint" class="hidden section" style="padding:10px;margin-bottom:10px;font-size:.8rem;font-weight:700;color:var(--primary-dark);text-align:center">
+ 📲 Para instalarla: toca <b>Compartir</b> y luego <b>Agregar a inicio</b>.
+</div>
+
+<div class="controls">
+<button class="btn warning" id="manualBtn">✍️ Manual</button>
+<button class="btn" id="autoBtn">🎲 Automático</button>
+<button class="btn danger" id="clearBtn">🧹 Limpiar</button>
+</div>
+
+<section class="section">
+ <div class="callwidget">
+  <div class="lastball" id="lastball"><span class="lb-num" id="lbNum">—</span></div>
+  <div class="ballmeta">
+   <span class="label">Últimos números</span>
+   <div class="history" id="history"><span class="empty-hist">Sin números cantados</span></div>
+  </div>
+ </div>
+ <h2>🎯 Tablero 1–90</h2>
+ <div class="bingo-board" id="board"></div>
+</section>
+
+<section class="section hidden" id="manualSection">
+ <h2>✍️ Nuevo cartón manual</h2>
+ <div class="rules">Cada cartón tiene 3 secciones de 9 columnas × 3 filas. Columnas: 1–9 · 10–19 · 20–29 · 30–39 · 40–49 · 50–59 · 60–69 · 70–79 · 80–90. Cada fila debe llevar exactamente 5 números; el resto quedan libres (color). Toca una casilla libre para escribir un número; toca la ✕ para volver a dejarla libre.</div>
+ <div class="serieInput"><label for="serieField">Serie</label><input id="serieField" type="text" maxlength="8"></div>
+ <div class="sectionTabs" id="sectionTabs"></div>
+ <div class="lgrid" id="manualGrid"></div>
+ <div class="actions"><button class="btn secondary" id="cancelManual">Cancelar</button><button class="btn" id="saveManual">💾 Guardar cartón</button></div>
+</section>
+
+<section class="section"><h2>🎫 Cartones cargados</h2><div class="cards" id="cards"></div></section>
+
+<section class="section"><h2>🏆 Premios logrados</h2><div class="premios" id="premios"><span class="empty-hist">Todavía no hay premios.</span></div></section>
+
+</div>
+
+<div class="overlay hidden" id="overlay"><div class="modal"><div class="party">🎉 🎊 🎉 🎊 🎉</div><div class="bingo">¡LOTERÍA!</div><div class="party">🎊 🎉 🎊 🎉 🎊</div><h3 id="winnerText"></h3><div class="saved" id="winner"></div><button class="btn" id="close">Continuar</button></div></div>
+
+<div class="overlay hidden" id="clearOverlay">
+ <div class="modal small">
+  <h3>🧹 ¿Qué deseas limpiar?</h3>
+  <div class="clearOptions">
+   <button class="btn" data-clear="numbers">🔢 Solo números marcados</button>
+   <button class="btn danger" data-clear="all">🗑️ Todo (incluye cartones)</button>
+  </div>
+  <button class="btn secondary" id="cancelClear">Cancelar</button>
+ </div>
+</div>
+
+<div class="premioBanner" id="premioBanner"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Cartones de Lotería - By MonRoyLab */
+const KC="loteriaCartonesMonRoyLab",KB="loteriaLlamadasMonRoyLab",KP="loteriaPremiosMonRoyLab";
+const PALETTE=["#1E7FE0","#8E3FBF","#00814F","#E0A200","#D64545","#0E9AA7","#C2185B","#6D4C41","#546E7A"];
+const COL_STARTS=[1,10,20,30,40,50,60,70,80];
+const COL_ENDS=[9,19,29,39,49,59,69,79,90];
+
+let cards=JSON.parse(localStorage.getItem(KC)||"[]");
+let called=JSON.parse(localStorage.getItem(KB)||"[]");
+let premiosLog=JSON.parse(localStorage.getItem(KP)||"[]");
+let manualSerie="",manualSections=[],manualActiveSection=0;
+
+const $=id=>document.getElementById(id);
+const save=()=>{localStorage.setItem(KC,JSON.stringify(cards));localStorage.setItem(KB,JSON.stringify(called));localStorage.setItem(KP,JSON.stringify(premiosLog))};
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const colRange=c=>[COL_STARTS[c],COL_ENDS[c]];
+const decadeColor=n=>PALETTE[Math.floor((n-1)/10)];
+
+let toastTimer;
+function toast(msg){
+ clearTimeout(toastTimer);
+ const t=$("toast");t.textContent=msg;t.classList.add("show");
+ toastTimer=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+/* ---- last ball / board ---- */
+function renderLastBall(){
+ const big=$("lastball"),numEl=$("lbNum"),hist=$("history");
+ const last=called.at(-1);
+ if(!last){
+  big.style.setProperty("--ballColor","var(--muted)");numEl.textContent="—";
+  hist.innerHTML="<span class='empty-hist'>Sin números cantados</span>";return;
+ }
+ big.style.setProperty("--ballColor",decadeColor(last));numEl.textContent=last;
+ big.classList.remove("pop");void big.offsetWidth;big.classList.add("pop");
+ const prev=called.slice(-6,-1).reverse();
+ hist.innerHTML="";
+ if(!prev.length){hist.innerHTML="<span class='empty-hist'>Primer número</span>";}
+ else prev.forEach(n=>{const c=document.createElement("div");c.className="chip";c.style.setProperty("--ballColor",decadeColor(n));c.textContent=n;hist.appendChild(c)});
+}
+function renderBoard(){
+ const b=$("board");b.innerHTML="";
+ for(let n=1;n<=90;n++){
+  let d=document.createElement("div");d.className="ball";d.textContent=n;
+  d.style.setProperty("--ballColor",decadeColor(n));
+  if(called.includes(n))d.classList.add("called");
+  if(called.at(-1)===n)d.classList.add("last");
+  d.onclick=()=>toggle(n);
+  b.appendChild(d);
+ }
+ renderLastBall();
+}
+function toggle(n){
+ if(called.includes(n))called=called.filter(x=>x!==n);else called.push(n);
+ save();renderBoard();afterMark();
+ toast(`Número ${n} ${called.includes(n)?"marcado":"desmarcado"}.`);
+}
+function afterMark(){updateMilestones();renderCards();renderPremios();save();}
+
+/* ---- pattern / auto generation ---- */
+function generatePattern(){
+ while(true){
+  let counts=Array(9).fill(1),remaining=6;
+  while(remaining>0){let idx=Math.floor(Math.random()*9);if(counts[idx]<3){counts[idx]++;remaining--;}}
+  let rowCounts=[0,0,0];
+  let matrix=Array.from({length:3},()=>Array(9).fill(false));
+  let colsOrder=shuffle([...Array(9).keys()]);
+  let ok=true;
+  for(const col of colsOrder){
+   let need=counts[col];
+   let avail=[0,1,2].filter(r=>rowCounts[r]<5);
+   if(avail.length<need){ok=false;break;}
+   let chosen=shuffle(avail).slice(0,need);
+   chosen.forEach(r=>{matrix[r][col]=true;rowCounts[r]++;});
+  }
+  if(ok&&rowCounts.every(x=>x===5))return matrix;
+ }
+}
+function generateSection(){
+ const pattern=generatePattern();
+ const usedByCol=Array.from({length:9},(_,c)=>{
+  let [min,max]=colRange(c);let pool=[];for(let n=min;n<=max;n++)pool.push(n);
+  pool=shuffle(pool);
+  let need=pattern.reduce((acc,row)=>acc+(row[c]?1:0),0);
+  return pool.slice(0,need).sort((a,b)=>a-b);
+ });
+ let colPointer=Array(9).fill(0);
+ let section=Array.from({length:3},()=>Array(9).fill(null));
+ for(let c=0;c<9;c++)for(let r=0;r<3;r++){
+  if(pattern[r][c])section[r][c]={free:false,num:usedByCol[c][colPointer[c]++]};
+  else section[r][c]={free:true};
+ }
+ return section;
+}
+function randomSerie(){return String(Math.floor(1000+Math.random()*9000));}
+function autoCard(){
+ let sections=[generateSection(),generateSection(),generateSection()];
+ let serie=randomSerie();
+ cards.push({id:Date.now()+Math.random(),serie,sections,milestones:[[0,0,0],[0,0,0],[0,0,0]]});
+ save();afterMark();
+ toast(`🎲 Cartón automático creado — Serie ${serie}.`);
+}
+
+/* ---- manual editor ---- */
+function blankManualSections(){
+ return Array.from({length:3},()=>Array.from({length:3},()=>Array.from({length:9},()=>({free:true,value:""}))));
+}
+function openManual(){
+ manualSerie=randomSerie();manualSections=blankManualSections();manualActiveSection=0;
+ $("serieField").value=manualSerie;
+ renderSectionTabs();renderManualGrid();
+ $("manualSection").classList.remove("hidden");
+ toast("Completa las 3 secciones del cartón.");
+}
+function renderSectionTabs(){
+ const wrap=$("sectionTabs");wrap.innerHTML="";
+ for(let s=0;s<3;s++){
+  let b=document.createElement("button");b.textContent=`Sección ${s+1}`;
+  if(s===manualActiveSection)b.classList.add("active");
+  b.onclick=()=>{manualActiveSection=s;renderSectionTabs();renderManualGrid();};
+  wrap.appendChild(b);
+ }
+}
+function renderManualGrid(){
+ const g=$("manualGrid");g.innerHTML="";
+ const sec=manualSections[manualActiveSection];
+ for(let r=0;r<3;r++)for(let c=0;c<9;c++){
+  g.appendChild(makeEditorCell(sec,r,c));
+ }
+}
+function makeEditorCell(sec,r,c){
+ const data=sec[r][c];
+ const div=document.createElement("div");
+ div.className="lcell editor"+(data.free?" free":"");
+ if(data.free){
+  div.onclick=()=>{data.free=false;data.value="";renderManualGrid();};
+ }else{
+  const inp=document.createElement("input");
+  inp.type="text";inp.inputMode="numeric";inp.maxLength=2;inp.value=data.value;
+  inp.oninput=e=>{data.value=e.target.value.replace(/\D/g,"").slice(0,2);};
+  inp.onclick=e=>e.stopPropagation();
+  const xBtn=document.createElement("button");xBtn.className="freetoggle";xBtn.type="button";xBtn.textContent="✕";
+  xBtn.onclick=e=>{e.stopPropagation();data.free=true;data.value="";renderManualGrid();};
+  div.appendChild(inp);div.appendChild(xBtn);
+ }
+ return div;
+}
+function saveManual(){
+ const serie=$("serieField").value.trim();
+ if(!serie){toast("⚠️ Ingresa la serie del cartón.");return;}
+ for(let s=0;s<3;s++){
+  let allNums=[];
+  for(let r=0;r<3;r++){
+   let rowNums=[];
+   for(let c=0;c<9;c++){
+    const cell=manualSections[s][r][c];
+    if(!cell.free){
+     const n=Number(cell.value);const [min,max]=colRange(c);
+     if(cell.value===""||!Number.isInteger(n)||n<min||n>max){
+      toast(`⚠️ Sección ${s+1}, fila ${r+1}: número inválido en columna ${c+1} (${min}–${max}).`);return;
+     }
+     rowNums.push(n);
+    }
+   }
+   if(rowNums.length!==5){toast(`⚠️ Sección ${s+1}, fila ${r+1}: debe tener exactamente 5 números (tiene ${rowNums.length}).`);return;}
+   if(new Set(rowNums).size!==rowNums.length){toast(`⚠️ Sección ${s+1}, fila ${r+1}: hay números repetidos.`);return;}
+   allNums.push(...rowNums);
+  }
+  if(new Set(allNums).size!==allNums.length){toast(`⚠️ Sección ${s+1}: hay números repetidos en la sección.`);return;}
+ }
+ const sections=manualSections.map(sec=>sec.map(row=>row.map(cell=>cell.free?{free:true}:{free:false,num:Number(cell.value)})));
+ cards.push({id:Date.now()+Math.random(),serie,sections,milestones:[[0,0,0],[0,0,0],[0,0,0]]});
+ save();$("manualSection").classList.add("hidden");afterMark();
+ toast(`✍️ Cartón guardado — Serie ${serie}.`);
+}
+
+/* ---- saved cards rendering ---- */
+function cardSectionGrid(card,si){
+ const wrap=document.createElement("div");wrap.className="lsection";
+ const g=document.createElement("div");g.className="lgrid";
+ for(let r=0;r<3;r++)for(let c=0;c<9;c++){
+  const cell=card.sections[si][r][c];
+  const d=document.createElement("div");
+  if(cell.free){d.className="lcell free";}
+  else{d.className="lcell"+(called.includes(cell.num)?" marked":"");d.textContent=cell.num;}
+  g.appendChild(d);
+ }
+ wrap.appendChild(g);
+ const lab=document.createElement("div");lab.className="serieLabel";lab.textContent=`Serie ${card.serie}`;
+ wrap.appendChild(lab);
+ return wrap;
+}
+function renderCards(){
+ $("count").textContent=cards.length;
+ const cont=$("cards");
+ cont.innerHTML=cards.length?"":"<div class='empty'>Todavía no hay cartones. Usa Manual o Automático para crear los tuyos — quedarán guardados para tus próximas partidas.</div>";
+ cards.forEach((card,i)=>{
+  const w=document.createElement("div");w.className="saved";
+  w.innerHTML=`<div class="title"><span>Cartón #${i+1} · Serie ${card.serie}</span><button class="btn danger">Eliminar</button></div>`;
+  w.querySelector("button").onclick=()=>{cards.splice(i,1);save();afterMark();};
+  for(let si=0;si<3;si++)w.appendChild(cardSectionGrid(card,si));
+  cont.appendChild(w);
+ });
+}
+
+/* ---- premios: ambo / terno / lotería ---- */
+function updateMilestones(){
+ cards.forEach((card,ci)=>{
+  card.sections.forEach((sec,si)=>{
+   for(let r=0;r<3;r++){
+    let count=0;
+    for(let c=0;c<9;c++){
+     const cell=sec[r][c];
+     if(cell&&!cell.free&&called.includes(cell.num))count++;
+    }
+    const prevLevel=card.milestones[si][r]||0;
+    let newLevel=prevLevel;
+    if(count>=4)newLevel=4;else if(count>=3)newLevel=Math.max(prevLevel,3);else if(count>=2)newLevel=Math.max(prevLevel,2);
+    if(newLevel>prevLevel){
+     card.milestones[si][r]=newLevel;
+     announce(ci,si,r,newLevel);
+    }
+   }
+  });
+ });
+}
+function announce(ci,si,ri,level){
+ const card=cards[ci];
+ const names={2:["AMBO","amb"],3:["TERNO","ter"],4:["LOTERÍA","lot"]};
+ const [label,cls]=names[level];
+ const desc=`Cartón #${ci+1} (Serie ${card.serie}) · Sección ${si+1} · Fila ${ri+1}`;
+ premiosLog.unshift({label,cls,desc,time:Date.now()});
+ premiosLog=premiosLog.slice(0,25);
+ showPremioBanner(label,desc,cls);
+ if(level===4)showWinner(ci,si,ri,desc);
+}
+
+/* visible banner notification, queued so simultaneous premios don't overlap */
+let bannerQueue=[],bannerBusy=false;
+function showPremioBanner(label,desc,cls){
+ bannerQueue.push({label,desc,cls});
+ processBannerQueue();
+}
+function processBannerQueue(){
+ if(bannerBusy||!bannerQueue.length)return;
+ bannerBusy=true;
+ const {label,desc,cls}=bannerQueue.shift();
+ const el=$("premioBanner");
+ el.className="premioBanner show "+cls;
+ el.innerHTML=`<div class="pb-badge">¡${label}!</div><div class="pb-desc">${desc}</div>`;
+ if(navigator.vibrate)navigator.vibrate(cls==="lot"?[300,100,300,100,500]:[150,80,150]);
+ setTimeout(()=>{
+  el.classList.remove("show");
+  setTimeout(()=>{bannerBusy=false;processBannerQueue();},350);
+ },2600);
+}
+function renderPremios(){
+ const wrap=$("premios");
+ if(!premiosLog.length){wrap.innerHTML="<span class='empty-hist'>Todavía no hay premios.</span>";return;}
+ wrap.innerHTML="";
+ premiosLog.forEach(p=>{
+  const it=document.createElement("div");it.className="premio-item";
+  it.innerHTML=`<span class="premio-badge ${p.cls}">${p.label}</span><span>${p.desc}</span>`;
+  wrap.appendChild(it);
+ });
+}
+function showWinner(ci,si,ri,desc){
+ const card=cards[ci];
+ $("winnerText").textContent=desc;
+ $("winner").innerHTML="";
+ $("winner").appendChild(cardSectionGrid(card,si));
+ $("overlay").classList.remove("hidden");
+ if(navigator.vibrate)navigator.vibrate([300,100,300,100,500]);
+}
+
+/* ---- clear modal ---- */
+function openClear(){$("clearOverlay").classList.remove("hidden")}
+function closeClear(){$("clearOverlay").classList.add("hidden")}
+function clearNumbers(){
+ called=[];
+ cards.forEach(c=>c.milestones=[[0,0,0],[0,0,0],[0,0,0]]);
+ premiosLog=[];
+ save();renderBoard();renderCards();renderPremios();
+ toast("🔢 Números marcados y premios reiniciados. Tus cartones siguen guardados.");
+}
+function clearAllData(){
+ if(!confirm("Esto eliminará también tus cartones guardados. ¿Continuar?"))return;
+ cards=[];called=[];premiosLog=[];save();$("overlay").classList.add("hidden");
+ renderBoard();renderCards();renderPremios();
+ toast("🗑️ Todo fue limpiado.");
+}
+document.querySelectorAll("[data-clear]").forEach(b=>b.onclick=()=>{
+ const map={numbers:clearNumbers,all:clearAllData};
+ map[b.dataset.clear]();closeClear();
+});
+$("cancelClear").onclick=closeClear;
+
+$("manualBtn").onclick=openManual;
+$("autoBtn").onclick=autoCard;
+$("saveManual").onclick=saveManual;
+$("cancelManual").onclick=()=>{$("manualSection").classList.add("hidden")};
+$("clearBtn").onclick=openClear;
+$("close").onclick=()=>{$("overlay").classList.add("hidden")};
+
+renderBoard();renderCards();renderPremios();
+
+/* ---- PWA: install + service worker ---- */
+if("serviceWorker" in navigator){
+ window.addEventListener("load",()=>{
+  navigator.serviceWorker.register("./sw.js").catch((err)=>console.error("SW error:",err));
+ });
+}
+let deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",(e)=>{
+ e.preventDefault();deferredPrompt=e;
+ $("installRow").classList.remove("hidden");
+});
+$("installBtn").addEventListener("click",async()=>{
+ if(!deferredPrompt)return;
+ deferredPrompt.prompt();
+ await deferredPrompt.userChoice;
+ deferredPrompt=null;
+ $("installRow").classList.add("hidden");
+});
+window.addEventListener("appinstalled",()=>{
+ $("installRow").classList.add("hidden");
+ toast("✅ App instalada correctamente.");
+});
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+if(isIOS&&!isStandalone){$("iosHint").classList.remove("hidden");}
+</script>
+</body>
+</html>
